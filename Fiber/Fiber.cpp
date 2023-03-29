@@ -11,9 +11,19 @@
 #include "Process.h"
 #include "Debugger.h"
 #include "Dumper.h"
+#include "AzureUploader.h"
+
+//void TestUpload()
+//{
+//	Fiber::AzureUploader uploader(
+//		"DefaultEndpointsProtocol=https;AccountName=qualitycontrol;AccountKey=7BPfgu7XJyzzZhh4X2M9z76EUwtQmn7oXle12Pk9KepctaAoifuCxzObV4y64lynm/Hqx8zx+sGCq08nV52YTA==;EndpointSuffix=core.windows.net", "qualitycontrol"); 
+//	uploader.Upload("c:/users/brush/desktop/googliebah.txt", "googliebah.txt");
+//}
 
 int main(int argc, char* argv[])
 {
+	//TestUpload(); 
+
 	argparse::ArgumentParser program("Fiber");
 	program.add_argument("-i", "--imagePath")
 		.required()
@@ -22,7 +32,11 @@ int main(int argc, char* argv[])
 		.help("Arguments to pass to the process."); 
 	program.add_argument("-o", "--output")
 		.required()
-		.help("Path at which to store minidump if crash encountered."); 
+		.help("Name to give the minidump file either in Azure or locally."); 
+	program.add_argument("-c", "--connectionString")
+		.help("Azure connection string to use when uploading the minidump."); 
+	program.add_argument("-b", "--blobName")
+		.help("Azure blob name to use when uploading the minidump"); 
 
 	try 
 	{
@@ -50,7 +64,17 @@ int main(int argc, char* argv[])
 		auto waitResult = debugger->Wait();
 		if (waitResult == Fiber::WaitResult::Crash)
 		{
-			Dumper::WriteMiniDump(miniDumpPath, debugger); 
+			if (program.is_used("-c") && program.is_used("-b"))
+			{
+				Dumper::WriteMiniDump("./temp.dmp", debugger);
+				Fiber::AzureUploader uploader(program.get<std::string>("-c"), program.get<std::string>("-b")); 
+				uploader.Upload("./temp.dmp", program.get<std::string>("-o")); 
+				DeleteFileA("./temp.dmp"); 
+			}
+			else
+			{
+				Dumper::WriteMiniDump(miniDumpPath, debugger);
+			}
 			debugger->Detach(); 
 		}
 	}

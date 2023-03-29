@@ -70,6 +70,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(SolutionDir)../Externals/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)../Externals/deb/lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(SolutionDir)../Externals/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)../Externals/rel/lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -109,8 +117,11 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>azure-core.lib;azure-storage-blobs.lib;azure-storage-common.lib;azure-storage-files-datalake.lib;azure-storage-files-shares.lib;libcurl-d.lib;zlibd.lib;dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>c:\windows\system32\xcopy "$(SolutionDir)..\Externals\deb\bins\*.dll" "$(TargetDir)" /I /H /Y /D</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -127,9 +138,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>azure-core.lib;azure-storage-blobs.lib;azure-storage-common.lib;azure-storage-files-datalake.lib;azure-storage-files-shares.lib;libcurl.lib;zlib.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>c:\windows\system32\xcopy "$(SolutionDir)..\Externals\rel\bins\*.dll" "$(TargetDir)" /I /H /Y /D</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AzureUploader.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Dumper.cpp" />
     <ClCompile Include="Fiber.cpp" />
@@ -137,6 +153,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="argparse\argparse.hpp" />
+    <ClInclude Include="AzureUploader.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Dumper.h" />
     <ClInclude Include="Process.h" />
