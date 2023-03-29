@@ -13,17 +13,8 @@
 #include "Dumper.h"
 #include "AzureUploader.h"
 
-//void TestUpload()
-//{
-//	Fiber::AzureUploader uploader(
-//		"DefaultEndpointsProtocol=https;AccountName=qualitycontrol;AccountKey=7BPfgu7XJyzzZhh4X2M9z76EUwtQmn7oXle12Pk9KepctaAoifuCxzObV4y64lynm/Hqx8zx+sGCq08nV52YTA==;EndpointSuffix=core.windows.net", "qualitycontrol"); 
-//	uploader.Upload("c:/users/brush/desktop/googliebah.txt", "googliebah.txt");
-//}
-
 int main(int argc, char* argv[])
 {
-	//TestUpload(); 
-
 	argparse::ArgumentParser program("Fiber");
 	program.add_argument("-i", "--imagePath")
 		.required()
