@@ -10,16 +10,29 @@ Process* Process::Launch(std::string imagePath, std::string parameters)
     ZeroMemory(&processInformation, sizeof(processInformation));
     ZeroMemory(&startupInfo, sizeof(startupInfo));
 
+    auto lastIndexOfSlash = imagePath.find_last_of("/\\");
+    std::string startupDirectory = ""; 
+    if (lastIndexOfSlash != std::string::npos)
+    {
+        startupDirectory = imagePath.substr(0, lastIndexOfSlash); 
+    }
+
+    std::string argumentsToUse = ""; 
+    if (parameters.length() > 0)
+    {
+        argumentsToUse = imagePath + " " + parameters; 
+    }
+
     startupInfo.cb = sizeof(startupInfo);
     BOOL created = ::CreateProcessA(
         imagePath.c_str(),
-        const_cast<char*>(parameters.c_str()),
+        const_cast<char*>(argumentsToUse.c_str()),
         0,
         0,
         FALSE,
         0,
         0,
-        0,
+        startupDirectory.c_str(),
         &startupInfo,
         &processInformation
     );

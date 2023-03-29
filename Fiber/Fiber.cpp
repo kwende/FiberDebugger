@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 		.required()
 		.help("Path of EXE to launch.");
 	program.add_argument("-a", "--arguments")
+		.remaining()
 		.help("Arguments to pass to the process."); 
 	program.add_argument("-o", "--output")
 		.required()

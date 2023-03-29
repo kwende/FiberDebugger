@@ -33,6 +33,7 @@ WaitResult Debugger::Wait()
 
 	DEBUG_EVENT debugEvent;
 	bool stillRunning = true; 
+	int exceptionChanceCount = 0; 
 	while (stillRunning && ::WaitForDebugEvent(&debugEvent, INFINITE))
 	{
 		DWORD dwContinueStatus = DBG_CONTINUE;
@@ -47,10 +48,18 @@ WaitResult Debugger::Wait()
 				break;
 
 			default:
-				result = WaitResult::Crash; 
-				_crashEvent = debugEvent; 
-				stillRunning = false; 
-				dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED; 
+				exceptionChanceCount++; 
+				if (exceptionChanceCount == 1)
+				{
+					dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
+				}
+				else
+				{
+					dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
+					stillRunning = false; 
+					_crashEvent = debugEvent; 
+					result = WaitResult::Crash; 
+				}
 				break;
 			}
 			break; 
@@ -58,6 +67,8 @@ WaitResult Debugger::Wait()
 			std::cout << "exit" << std::endl;
 			stillRunning = false; 
 			break; 
+		default:
+			exceptionChanceCount = 0; 
 		}
 
 		ContinueDebugEvent(debugEvent.dwProcessId,
