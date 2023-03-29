@@ -64,7 +64,6 @@ WaitResult Debugger::Wait()
 			}
 			break; 
 		case EXIT_PROCESS_DEBUG_EVENT:
-			std::cout << "exit" << std::endl;
 			stillRunning = false; 
 			break; 
 		default:
