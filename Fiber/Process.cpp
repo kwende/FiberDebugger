@@ -2,6 +2,9 @@
 using namespace Fiber; 
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+
 Process* Process::Launch(std::string imagePath, std::string parameters)
 {   
     PROCESS_INFORMATION processInformation;
@@ -10,17 +13,25 @@ Process* Process::Launch(std::string imagePath, std::string parameters)
     ZeroMemory(&processInformation, sizeof(processInformation));
     ZeroMemory(&startupInfo, sizeof(startupInfo));
 
+    spdlog::debug("Image path sent ot process launch is {0}", imagePath); 
+
     auto lastIndexOfSlash = imagePath.find_last_of("/\\");
-    std::string startupDirectory = ""; 
+    std::string startupDirectory = "."; 
     if (lastIndexOfSlash != std::string::npos)
     {
         startupDirectory = imagePath.substr(0, lastIndexOfSlash); 
+        spdlog::debug("Setting the startup directory to '{0}'", startupDirectory); 
+    }
+    else
+    {
+        imagePath = ".\\" + imagePath;
     }
 
     std::string argumentsToUse = ""; 
     if (parameters.length() > 0)
     {
         argumentsToUse = imagePath + " " + parameters; 
+        spdlog::debug("Setting the arguments to use to '{0}'", argumentsToUse); 
     }
 
     startupInfo.cb = sizeof(startupInfo);
@@ -41,6 +52,7 @@ Process* Process::Launch(std::string imagePath, std::string parameters)
 
     if (created)
     {
+        spdlog::debug("The process was successfully started."); 
         ULONGLONG start = GetTickCount64();
         while (GetTickCount64() - start < 5000)
         {
@@ -54,6 +66,11 @@ Process* Process::Launch(std::string imagePath, std::string parameters)
                 }
             }
         }
+    }
+    else
+    {
+
+        spdlog::error("Failed to start the process. {0}.", std::system_category().message(GetLastError()));
     }
 
     return process;

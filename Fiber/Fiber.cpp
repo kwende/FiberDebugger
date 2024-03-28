@@ -5,6 +5,9 @@
 #include <string>
 #include "argparse/argparse.hpp"
 
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
+
 #include <Windows.h>
 #include <imagehlp.h>
 
@@ -15,6 +18,16 @@
 
 int main(int argc, char* argv[])
 {
+	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+	console_sink->set_level(spdlog::level::debug);
+	console_sink->set_pattern("[fiber] [%^%l%$] %v");
+
+	auto multiSink = std::make_shared<spdlog::logger>(std::string("fiber"), spdlog::sinks_init_list{  console_sink });
+	multiSink->set_level(spdlog::level::debug);
+	multiSink->flush_on(spdlog::level::debug);
+
+	spdlog::set_default_logger(multiSink);
+
 	argparse::ArgumentParser program("Fiber");
 	program.add_argument("-i", "--imagePath")
 		.required()
@@ -41,6 +54,8 @@ int main(int argc, char* argv[])
 		std::exit(1);
 	}
 
+	spdlog::debug("Successfully parsed command line arguments."); 
+
 	auto imagePath = program.get<std::string>("-i"); 
 	auto miniDumpPath = program.get<std::string>("-o"); 
 	std::string arguments = ""; 
@@ -49,18 +64,23 @@ int main(int argc, char* argv[])
 		arguments = program.get<std::string>("-a");
 	}
 
+	spdlog::debug("Launching '{0}' with parameters '{1}'", imagePath.c_str(), arguments.c_str());
 	auto process = std::shared_ptr<Fiber::Process>(Fiber::Process::Launch(imagePath, arguments));
 	if (process != nullptr)
 	{
+		spdlog::debug("Process '{0}' successfully launched. Attaching debugger.", imagePath.c_str());
 		auto debugger = std::shared_ptr<Fiber::Debugger>(Fiber::Debugger::Attach(process));
 		auto waitResult = debugger->Wait();
 		if (waitResult == Fiber::WaitResult::Crash)
 		{
+			spdlog::info("Fiber encountered a crash in the child process. Creating minidump..."); 
 			if (program.is_used("-c") && program.is_used("-b"))
 			{
 				Dumper::WriteMiniDump("./temp.dmp", debugger);
-				Fiber::AzureUploader uploader(program.get<std::string>("-c"), program.get<std::string>("-b")); 
-				uploader.Upload("./temp.dmp", program.get<std::string>("-o")); 
+				std::string blobNameForUpload = "FiberDumps/" + program.get<std::string>("-o");
+				spdlog::info("Minidump generated. Blob name is '{0}'.", blobNameForUpload);
+				Fiber::AzureUploader uploader(program.get<std::string>("-c"), program.get<std::string>("-b"));
+				uploader.Upload("./temp.dmp", blobNameForUpload);
 				DeleteFileA("./temp.dmp"); 
 			}
 			else
@@ -70,5 +90,11 @@ int main(int argc, char* argv[])
 			debugger->Detach(); 
 		}
 	}
+	else
+	{
+		spdlog::error("Failed to launch {0}", imagePath); 
+	}
+
+	spdlog::info("Fiber is quitting."); 
 }
 

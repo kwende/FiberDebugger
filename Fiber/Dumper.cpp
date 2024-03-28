@@ -36,11 +36,17 @@ bool Dumper::WriteMiniDump(std::string miniDumpPath, std::shared_ptr<Fiber::Debu
 					NULL); 
 				if (hDumpFile != INVALID_HANDLE_VALUE)
 				{
+					const DWORD Flags = MiniDumpWithFullMemory |
+						MiniDumpWithFullMemoryInfo |
+						MiniDumpWithHandleData |
+						MiniDumpWithUnloadedModules |
+						MiniDumpWithThreadInfo;
+
 					BOOL wroteFile = MiniDumpWriteDump(
 						hProcess,
 						debugEvent.dwProcessId,
 						hDumpFile,
-						MINIDUMP_TYPE::MiniDumpNormal,
+						(MINIDUMP_TYPE)Flags,
 						&exceptionInformation,
 						NULL, NULL); 
 
